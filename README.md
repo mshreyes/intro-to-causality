@@ -29,7 +29,6 @@ Delivered as a zero-dependency, single-file interactive application (`index.html
 
 1. Download or clone `index.html`.
 2. Double-click the file to open it in any modern browser (Chrome, Firefox, Safari, Edge).
-3. (Optional) To host for students or colleagues, upload `index.html` to any static site platform, such as GitHub Pages, Netlify, or Cloudflare Pages.
 
 ## Contributing
 
