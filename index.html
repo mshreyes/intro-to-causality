@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Introduction to Causality &amp; Causal Inference</title>
+<style>
+:root{
+  --bg:#f8f9fc;--surface:#ffffff;--ink:#1a202c;--mute:#5a6578;--line:#e2e8f0;
+  --accent:#2b4c7e;--accent-ink:#ffffff;--accent-light:#eef3f9;
+  --copper:#b85d19;--code:#121824;--code-ink:#e2e8f0;
+  --ok:#1b7a4e;--bad:#b53225;--box-bg:#edf2f7;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c111a;--surface:#151d2a;--ink:#e6edf8;--mute:#8e9cb2;--line:#263346;
+    --accent:#5b88c7;--accent-ink:#0c111a;--accent-light:#1c283a;
+    --copper:#e07f38;--code:#080c13;--code-ink:#dbe4f0;
+    --ok:#4ed38f;--bad:#ff7869;--box-bg:#1d2839
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c111a;--surface:#151d2a;--ink:#e6edf8;--mute:#8e9cb2;--line:#263346;
+  --accent:#5b88c7;--accent-ink:#0c111a;--accent-light:#1c283a;
+  --copper:#e07f38;--code:#080c13;--code-ink:#dbe4f0;
+  --ok:#4ed38f;--bad:#ff7869;--box-bg:#1d2839
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+h1,h2,h3,h4,button,nav,.tag,.meta,label{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{padding:32px 20px 12px;max-width:1080px;margin:0 auto}
+h1{font-size:clamp(1.8rem,4vw,2.5rem);line-height:1.2;margin:0 0 10px;color:var(--ink);font-weight:800}
+header p{max-width:70ch;color:var(--mute);margin:0 0 16px;font-size:1.05rem}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;max-width:480px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.meta{font-size:.85rem;color:var(--mute);margin-top:8px}
+.wrap{display:grid;grid-template-columns:260px 1fr;gap:28px;max-width:1080px;margin:0 auto;padding:20px 20px 80px}
+nav{position:sticky;top:calc(16px + env(safe-area-inset-top,0px));align-self:start;display:flex;flex-direction:column;gap:5px}
+nav button{text-align:left;background:none;border:1px solid transparent;color:var(--ink);padding:9px 12px;border-radius:6px;cursor:pointer;font-size:.9rem;line-height:1.3}
+nav button:hover{border-color:var(--line);background:var(--surface)}
+nav button[aria-current="true"]{background:var(--surface);border-color:var(--accent);font-weight:700;color:var(--accent)}
+nav button.done::after{content:" ✓";color:var(--ok)}
+main{min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.02)}
+h2{margin:0 0 6px;font-size:1.55rem;color:var(--ink)}
+h3{margin:18px 0 10px;font-size:1.15rem;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:6px}
+h3:first-of-type{margin-top:0}
+.goal{color:var(--copper);font-weight:600;margin:0 0 14px}
+ul{padding-left:22px;margin:6px 0 14px}
+li{margin-bottom:6px}
+pre{background:var(--code);color:var(--code-ink);padding:16px;border-radius:8px;overflow-x:auto;font:13.5px/1.55 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;margin:8px 0 14px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}
+.lang{font:700 .8rem system-ui,sans-serif;color:var(--copper);letter-spacing:0.04em;text-transform:uppercase}
+.formula-box{background:var(--box-bg);border-left:4px solid var(--accent);padding:14px 18px;border-radius:0 8px 8px 0;margin:12px 0 16px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.02rem}
+.paper-item{padding:14px 0;border-top:1px solid var(--line)}
+.paper-item:first-of-type{border-top:none}
+.paper-title{font-size:1.02rem;font-weight:700;color:var(--accent);margin-bottom:4px}
+.paper-title a{color:inherit;text-decoration:none}
+.paper-title a:hover{text-decoration:underline}
+.paper-authors{font-size:.88rem;color:var(--mute);margin-bottom:6px}
+.paper-desc{font-size:.93rem;margin:0}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.filters button,.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 13px;border-radius:999px;cursor:pointer;font-size:.85rem;font-weight:500}
+.filters button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);border-radius:6px;padding:9px 16px;font-weight:600}
+.res{display:flex;gap:12px;padding:11px 0;border-top:1px solid var(--line);align-items:baseline}
+.res:first-of-type{border-top:0}
+.tag{flex:none;font-size:.75rem;font-weight:600;border:1px solid var(--line);border-radius:4px;padding:2px 7px;color:var(--copper);min-width:70px;text-align:center}
+.res a{color:var(--accent);font-weight:600;text-decoration:none}
+.res a:hover{text-decoration:underline}
+.res span.n{color:var(--mute);font-size:.9rem}
+.q{margin:16px 0;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.q:last-child{border-bottom:none;padding-bottom:0}
+.q p{margin:0 0 8px;font-weight:600}
+.opt{display:block;width:100%;text-align:left;margin:6px 0;padding:10px 14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;cursor:pointer;font:inherit;transition:background .2s}
+.opt:hover{border-color:var(--accent)}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 18%,var(--surface));font-weight:600}
+.opt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 18%,var(--surface))}
+.why{font-size:.92rem;color:var(--mute);margin-top:6px}
+.row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:820px){.wrap{grid-template-columns:1fr}nav{position:static;flex-direction:row;flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<header>
+<h1>Introduction to Causality &amp; Causal Inference</h1>
+<p>A rigorous curriculum bridging structural causal models (DAGs, do-calculus), potential outcomes (Rubin causal model), quasi-experimental identification, and causal machine learning. Each module features clear mathematical formulations, Python and R implementations, foundational landmark papers, and conceptual checks.</p>
+<div class="bar" aria-hidden="true"><i id="pb"></i></div>
+<div class="meta" id="pt"></div>
+</header>
+<div class="wrap">
+<nav id="nav" aria-label="Course Modules"></nav>
+<main id="mod"></main>
+</div>
+
+<script>
+var M = [
+{
+  t: "The Causal Ladder & Foundations",
+  time: "1 week",
+  goal: "Distinguish association from causation, formalize Pearl's Causal Hierarchy, and understand Simpson's Paradox.",
+  math: "<b>Pearl's Three-Level Causal Hierarchy:</b><br>" +
+        "1. Association (Seeing): P(Y | X = x)<br>" +
+        "2. Intervention (Doing): P(Y | do(X = x))<br>" +
+        "3. Counterfactual (Imagining): P(Y<sub>X=x</sub> = y' | X = x', Y = y)<br><br>" +
+        "<b>Fundamental Problem of Causal Inference:</b><br>" +
+        "Individual Treatment Effect (ITE): &tau;<sub>i</sub> = Y<sub>i</sub>(1) - Y<sub>i</sub>(0). We only ever observe Y<sub>i</sub> = X<sub>i</sub> &middot; Y<sub>i</sub>(1) + (1 - X<sub>i</sub>) &middot; Y<sub>i</sub>(0).",
+  learn: [
+    "Correlation does not imply causation because observational conditioning P(Y | X) conflates genuine causal mechanisms with common confounders.",
+    "Simpson's Paradox illustrates how an aggregate trend can completely reverse when conditioned on a subpopulation; deciding whether to condition requires a causal diagram, not pure statistics.",
+    "The Ladder of Causation separates statistical association (passive observation) from physical/policy interventions (do-operator) and retrospective counterfactual queries.",
+    "Identification asks whether a causal quantity (like P(Y | do(X = x))) can be computed purely from observational probability distributions and structural assumptions."
+  ],
+  app: "Evaluating observational healthcare studies, diagnosing when clinical treatment choices correlate with patient severity, and avoiding spurious features in machine learning models.",
+  py: "# Demonstrating Simpson's Paradox numerically in Python\nimport pandas as pd, numpy as np\n\n# Group A (severe patients): high treatment rate, lower recovery\n# Group B (mild patients): low treatment rate, high recovery\ndf = pd.DataFrame({\n    'severity': ['Severe']*100 + ['Mild']*100,\n    'treatment': [1]*80 + [0]*20 + [1]*20 + [0]*80,\n    'recovered': [1]*40 + [1]*12 + [1]*18 + [0]*2 + [1]*19 + [0]*1 + [1]*70 + [0]*10\n})\nprint('Marginal recovery rate by treatment:')\nprint(df.groupby('treatment')['recovered'].mean())\nprint('\\nConditional recovery rate by severity:')\nprint(df.groupby(['severity', 'treatment'])['recovered'].mean())",
+  r: "# Demonstrating Simpson's Paradox in R\nlibrary(dplyr)\ndf <- data.frame(\n  severity = rep(c('Severe', 'Mild'), each = 100),\n  treatment = c(rep(1,80), rep(0,20), rep(1,20), rep(0,80)),\n  recovered = c(rep(1,40), rep(0,40), rep(1,12), rep(0,8), rep(1,19), rep(0,1), rep(1,70), rep(0,10))\n)\ncat('Marginal:\\n')\ndf %>% group_by(treatment) %>% summarize(rate = mean(recovered))\ncat('Stratified by severity:\\n')\ndf %>% group_by(severity, treatment) %>% summarize(rate = mean(recovered))",
+  papers: [
+    {
+      title: "The Seven Tools of Causal Inference, with Reflections on Machine Learning",
+      authors: "Judea Pearl (2019)",
+      venue: "Communications of the ACM, 62(3), 54-60",
+      link: "https://cacm.acm.org/magazines/2019/3/234929-the-seven-tools-of-causal-inference/fulltext",
+      desc: "Presents an accessible conceptual summary of why traditional probability and deep learning fail to address causal queries, outlining the mathematical machinery of causal models."
+    },
+    {
+      title: "The Interpretation of Interaction in Contingency Tables",
+      authors: "Edward H. Simpson (1951)",
+      venue: "Journal of the Royal Statistical Society: Series B, 13(2), 238-241",
+      link: "https://doi.org/10.1111/j.2517-6161.1951.tb00088.x",
+      desc: "The classic paper formulating the reversal paradox in aggregated multi-way tables, highlighting the danger of unprincipled pooling."
+    }
+  ],
+  res: [
+    ["Book", "The Book of Why: The New Science of Cause and Effect", "https://en.wikipedia.org/wiki/The_Book_of_Why", "Pearl & Mackenzie's popular introduction"],
+    ["Course", "Brady Neal: Introduction to Causal Inference", "https://www.bradyneal.com/causal-inference-course", "Open video lectures and clean pedagogical notes"],
+    ["Book", "Causal Inference in Statistics: A Primer", "https://www.wiley.com/en-us/Causal+Inference+in+Statistics%3A+A+Primer-p-9781119186847", "Concise guide to DAGs, do-calculus, and counterfactuals"]
+  ],
+  quiz: [
+    ["Which query sits on Rung 2 (Intervention) of Pearl's Causal Hierarchy?", ["What is the probability of disease given high blood pressure?", "What will happen to patient outcomes if we mandate a universal salt tax?", "Would this individual patient have survived if they had received the drug yesterday?"], 1, "Rung 2 evaluates intentional interventions via the do-operator P(Y | do(X)). Rung 1 is passive observation; Rung 3 is individual retrospective counterfactuals."],
+    ["Why does Simpson's Paradox occur?", ["Due to numerical floating point errors in software", "Because a confounder is unevenly distributed across treatment arms", "Because sample sizes are too small"], 1, "A confounding factor correlated with both exposure and outcome distorts the marginal relationship unless properly identified and adjusted."],
+    ["What does the Fundamental Problem of Causal Inference state?", ["We can never compute observational correlations", "For any single unit, we observe only one potential outcome, never both simultaneously", "Randomized controlled trials are mathematically impossible"], 1, "Because we cannot turn back time and observe the same unit under both treatment and control, individual treatment effects are unobservable."]
+  ]
+},
+{
+  t: "Structural Causal Models & Directed Acyclic Graphs (DAGs)",
+  time: "1 to 2 weeks",
+  goal: "Construct Structural Causal Models, test d-separation, and diagnose fork, chain, and collider geometries.",
+  math: "<b>Structural Causal Model (SCM):</b><br>" +
+        "X<sub>i</sub> := f<sub>i</sub>(PA<sub>i</sub>, U<sub>i</sub>), where PA<sub>i</sub> are parents of X<sub>i</sub> and U<sub>i</sub> are exogenous noise variables.<br><br>" +
+        "<b>Fundamental Graph Structures:</b><br>" +
+        "&bull; Chain: X &rarr; M &rarr; Y (M is a mediator; conditioning on M blocks the path)<br>" +
+        "&bull; Fork: X &larr; Z &rarr; Y (Z is a common cause; conditioning on Z blocks confounding)<br>" +
+        "&bull; Collider: X &rarr; C &larr; Y (C is a common effect; conditioning on C <i>opens</i> a spurious path)",
+  learn: [
+    "An SCM represents mechanisms through non-parametric structural assignments (:=), encoding directional physical causal laws.",
+    "A DAG G is Markov compatible with probability distribution P if every variable is conditionally independent of its non-descendants given its parents.",
+    "d-separation (directional separation) is a purely graphical criterion that determines whether X is conditionally independent of Y given a set Z (X &perp; Y | Z).",
+    "Conditioning on a collider (or a descendant of a collider) induces Berkson's bias or selection bias, creating a spurious non-causal association between its causes."
+  ],
+  app: "Designing epidemiological study criteria without inadvertently conditioning on post-treatment colliders or selection variables (e.g., survival bias, hospitalization bias).",
+  py: "import networkx as nx\n\n# Construct a causal DAG\nG = nx.DiGraph()\nG.add_edges_from([('Z', 'X'), ('Z', 'Y'), ('X', 'M'), ('M', 'Y')])\n\n# Check conditional independence and d-separation\n# In NetworkX: d-separated checks if path is blocked\nprint('Is X d-separated from Y given Z?', nx.is_d_separated(G, {'X'}, {'Y'}, {'Z'}))\nprint('Is X d-separated from Y given {Z, M}?', nx.is_d_separated(G, {'X'}, {'Y'}, {'Z', 'M'}))",
+  r: "library(dagitty)\n# Define DAG and test d-separation\ng <- dagitty('dag { Z -> X; Z -> Y; X -> M; M -> Y }')\ndseparated(g, 'X', 'Y', 'Z')\ndseparated(g, 'X', 'Y', c('Z', 'M'))",
+  papers: [
+    {
+      title: "Probabilistic Reasoning in Intelligent Systems: Networks of Plausible Inference",
+      authors: "Judea Pearl (1988)",
+      venue: "Morgan Kaufmann Publishers",
+      link: "https://dl.acm.org/doi/book/10.5555/531414",
+      desc: "The monumental monograph that introduced Bayesian networks, directional separation (d-separation), and belief propagation algorithms to computer science."
+    },
+    {
+      title: "Causal Diagrams for Empirical Research",
+      authors: "Judea Pearl (1995)",
+      venue: "Biometrika, 82(4), 669-688",
+      link: "https://doi.org/10.1093/biomet/82.4.669",
+      desc: "Introduced graphical rules for causal identification in epidemiology and statistics, outlining the mathematical foundations of the do-calculus."
+    }
+  ],
+  res: [
+    ["Tool", "DAGitty: Draw and analyze causal diagrams", "http://www.dagitty.net", "In-browser DAG builder that automatically identifies adjustment sets"],
+    ["Docs", "DoWhy Documentation (PyWhy)", "https://pywhy.github.io/dowhy/", "Python library based on Pearlian causal graphs"],
+    ["Book", "Causality: Models, Reasoning, and Inference", "https://doi.org/10.1017/CBO9780511803161", "Judea Pearl's definitive textbook (2nd ed., 2009)"]
+  ],
+  quiz: [
+    ["In the path X &rarr; C &larr; Y, what happens when we condition on C?", ["The path is blocked", "A spurious association is opened between X and Y", "Nothing changes"], 1, "Colliders naturally block a path; conditioning on a collider (or its descendants) unblocks the path, inducing spurious correlation."],
+    ["Which of the following creates confounding in the causal relationship between X and Y?", ["X &rarr; M &rarr; Y", "X &larr; Z &rarr; Y", "X &rarr; C &larr; Y"], 1, "A fork (common cause Z) generates non-causal confounding correlation between X and Y."],
+    ["If X and Y are d-separated by Z in a DAG, what statistical property is guaranteed under the Markov condition?", ["X and Y are uncorrelated marginally", "X and Y are conditionally independent given Z (X &perp; Y | Z)", "X causes Y directly"], 1, "d-separation graphically implies conditional independence in every probability distribution compatible with the graph."]
+  ]
+},
+{
+  t: "The Potential Outcomes Framework (Rubin Causal Model)",
+  time: "1 to 2 weeks",
+  goal: "Master potential outcomes, state identification assumptions (SUTVA, ignorability, positivity), and define treatment effects.",
+  math: "<b>Causal Estimands:</b><br>" +
+        "&bull; Average Treatment Effect (ATE): &tau;<sub>ATE</sub> = E[Y(1) - Y(0)]<br>" +
+        "&bull; Average Treatment Effect on the Treated (ATT): &tau;<sub>ATT</sub> = E[Y(1) - Y(0) | X = 1]<br><br>" +
+        "<b>Core Assumptions for Identification:</b><br>" +
+        "1. <b>SUTVA</b>: Stable Unit Treatment Value Assumption (no interference between units; no hidden versions of treatment).<br>" +
+        "2. <b>Ignorability (Unconfoundedness)</b>: (Y(1), Y(0)) &perp; X | Z.<br>" +
+        "3. <b>Positivity (Overlap)</b>: 0 &lt; P(X = 1 | Z = z) &lt; 1 for all z.",
+  learn: [
+    "Originating with Jerzy Neyman (1923) for agricultural trials and generalized by Donald Rubin (1974) to observational studies, potential outcomes define causation via hypothetical counterfactuals.",
+    "The observed outcome is expressed through the switching equation: Y = X &middot; Y(1) + (1 - X) &middot; Y(0).",
+    "SUTVA requires that one unit's treatment does not affect another unit's potential outcomes (violated in infectious disease vaccines or social networks without spillover modeling).",
+    "Positivity ensures that for every covariate stratum Z, there is a non-zero probability of receiving either treatment; violations lead to structural extrapolation."
+  ],
+  app: "Designing clinical trials, calculating the causal impact of advertising campaigns, and evaluating economic welfare interventions.",
+  py: "# Estimating ATE under unconfoundedness with simple stratification in Python\nimport numpy as np, pandas as pd\n\nnp.random.seed(42)\nn = 1000\nz = np.random.binomial(1, 0.5, n) # Confounder (e.g. age bracket)\nprob_x = 0.2 + 0.5 * z\nx = np.random.binomial(1, prob_x) # Treatment\ny0 = 10 + 5 * z + np.random.normal(0, 1, n)\ny1 = y0 + 3.5                     # True constant treatment effect = 3.5\ny = x * y1 + (1 - x) * y0          # Observed outcome\n\n# Stratified estimator: sum_z [E[Y|X=1, Z=z] - E[Y|X=0, Z=z]] * P(Z=z)\ndf = pd.DataFrame({'Z': z, 'X': x, 'Y': y})\nw0 = np.mean(df['Z'] == 0)\nw1 = np.mean(df['Z'] == 1)\ndiff_z0 = df[(df['Z']==0)&(df['X']==1)]['Y'].mean() - df[(df['Z']==0)&(df['X']==0)]['Y'].mean()\ndiff_z1 = df[(df['Z']==1)&(df['X']==1)]['Y'].mean() - df[(df['Z']==1)&(df['X']==0)]['Y'].mean()\nate_est = w0 * diff_z0 + w1 * diff_z1\nprint(f'Estimated ATE: {ate_est:.3f} (True: 3.5)')",
+  r: "# Estimating ATE with regression adjustment in R\nset.seed(42)\nn <- 1000\nz <- rbinom(n, 1, 0.5)\nx <- rbinom(n, 1, 0.2 + 0.5 * z)\ny <- 10 + 5*z + 3.5*x + rnorm(n)\nfit <- lm(y ~ x + z)\ncoef(fit)['x'] # Unbiased estimate of ATE",
+  papers: [
+    {
+      title: "Estimating Causal Effects of Treatments in Randomized and Nonrandomized Studies",
+      authors: "Donald B. Rubin (1974)",
+      venue: "Journal of Educational Psychology, 66(5), 688-701",
+      link: "https://doi.org/10.1037/h0037350",
+      desc: "Formulates the potential outcomes framework for observational settings, laying the groundwork for modern quasi-experimental statistics."
+    },
+    {
+      title: "On the Application of Probability Theory to Agricultural Experiments",
+      authors: "Jerzy Neyman (1923/1990)",
+      venue: "Statistical Science, 5(4), 465-472 (translated by D. Dabrowska and T. Speed)",
+      link: "https://projecteuclid.org/journals/statistical-science/volume-5/issue-4/On-the-Application-of-Probability-Theory-to-Agricultural-Experiments/10.1214/ss/1177012026.full",
+      desc: "First introduction of potential outcomes and urn models in the context of randomized agricultural field trials."
+    }
+  ],
+  res: [
+    ["Book", "Causal Inference for Statistics, Social, and Biomedical Sciences", "https://doi.org/10.1017/CBO9781139025751", "Imbens & Rubin's comprehensive treatment of potential outcomes"],
+    ["Book", "What If? Causal Inference", "https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/", "Hernán & Robins (free Harvard textbook)"],
+    ["Guide", "The SUTVA Assumption in Practice", "https://gking.harvard.edu/files/gking/files/counterf.pdf", "Gary King on counterfactual assumptions and empirical pitfalls"]
+  ],
+  quiz: [
+    ["What does SUTVA stand for?", ["Standardized Uniform Treatment Variance Assumption", "Stable Unit Treatment Value Assumption", "Sequential Unconfounded Treatment Verification Analysis"], 1, "SUTVA assumes that treatments applied to one unit do not alter the potential outcomes of other units, and that there are no unrepresented treatment variations."],
+    ["Which condition ensures that all sub-populations have some chance of receiving treatment?", ["Unconfoundedness", "Positivity (Overlap)", "Consistency"], 1, "Positivity requires 0 < P(X=1 | Z) < 1, ensuring no subgroup is deterministically excluded from or assigned to treatment."],
+    ["Why can we estimate ATE directly in an idealized Randomized Controlled Trial without adjusting for covariates?", ["Because randomization guarantees (Y(1), Y(0)) &perp; X unconditionally", "Because randomization makes Y(0) = 0", "Because randomization eliminates potential outcomes"], 0, "Random assignment severs all incoming arrows to X, guaranteeing that treatment assignment is independent of the potential outcomes."]
+  ]
+},
+{
+  t: "Identification: Backdoor, Frontdoor & Do-Calculus",
+  time: "2 weeks",
+  goal: "Prove non-parametric identifiability, apply the Backdoor and Frontdoor criteria, and manipulate the do-operator.",
+  math: "<b>Backdoor Adjustment Formula:</b><br>" +
+        "P(Y | do(X = x)) = &sum;<sub>z</sub> P(Y | X = x, Z = z) &middot; P(Z = z)<br>" +
+        "Criterion: Z blocks all backdoor paths from X to Y and contains no descendants of X.<br><br>" +
+        "<b>Frontdoor Adjustment Formula:</b><br>" +
+        "P(Y | do(X = x)) = &sum;<sub>m</sub> P(M = m | X = x) &sum;<sub>x'</sub> P(Y | X = x', M = m) &middot; P(X = x')<br>" +
+        "Applicable when unobserved confounder U affects X &rarr; Y, but mediator M intercepts the entire causal effect with no U-confounding on X &rarr; M or M &rarr; Y.",
+  learn: [
+    "A backdoor path is any undirected path connecting X and Y that starts with an arrow pointing into X (X &larr; ... &rarr; Y).",
+    "The Backdoor Criterion provides a sufficient condition for choosing a set of covariates Z that purges all spurious confounding without opening collider paths.",
+    "The Frontdoor Criterion enables identification of causal effects even in the presence of unobserved confounders between exposure and outcome, exploiting an unconfounded mediator.",
+    "Pearl's Do-Calculus consists of three complete rules for transforming expressions containing do(&middot;) into standard observational probabilities.",
+    "Completeness: Tian and Pearl (2002) and Shpitser and Pearl (2006) proved that do-calculus is complete—if a causal effect is identifiable from a DAG, repeated applications of do-calculus will yield an expression."
+  ],
+  app: "Identifying the effect of smoking on lung cancer via intermediate tar deposits in the presence of unmeasured genotype confounders.",
+  py: "# Synthetic demonstration of Frontdoor Adjustment in Python\nimport numpy as np, pandas as pd\n\nnp.random.seed(42)\nn = 5000\nu = np.random.normal(0, 1, n)  # Unobserved confounder\nx = (u + np.random.normal(0, 0.5, n) > 0).astype(int) # Exposure\nm = 0.8 * x + np.random.normal(0, 0.2, n)            # Mediator (Tar)\ny = 2.0 * m + 1.5 * u + np.random.normal(0, 0.5, n)   # Outcome (Cancer)\n\n# Direct regression Y on X is heavily biased by U:\nprint('Biased naive effect:', np.polyfit(x, y, 1)[0])\n# True causal effect through M: 0.8 * 2.0 = 1.6\n# Frontdoor adjustment: sum_m P(m|x) sum_x' P(y|x', m) P(x')\n# (Approximated linearly: beta_m~x * beta_y~m.x)\nb1 = np.polyfit(x, m, 1)[0]\nb2 = np.linalg.lstsq(np.column_stack([m, x, np.ones(n)]), y, rcond=None)[0][0]\nprint(f'Frontdoor estimated effect: {b1 * b2:.3f} (True: 1.600)')",
+  r: "# Backdoor adjustment check with dagitty in R\nlibrary(dagitty)\ng <- dagitty('dag {\n  U [unobserved]\n  U -> X; U -> Y\n  X -> M -> Y\n}')\nadjustmentSets(g, exposure = 'X', outcome = 'Y') # Empty due to U\n# Frontdoor check:\nisAdjustmentSet(g, 'M', exposure = 'X', outcome = 'Y')",
+  papers: [
+    {
+      title: "A General Identification Condition for Causal Effects",
+      authors: "Jin Tian, Judea Pearl (2002)",
+      venue: "Eighteenth National Conference on Artificial Intelligence (AAAI), 567-573",
+      link: "https://dl.acm.org/doi/10.5555/777092.777178",
+      desc: "Presents graphical conditions and algorithms for determining whether an arbitrary causal effect is identifiable in any semi-Markovian model."
+    },
+    {
+      title: "Identification of Joint Interventional Distributions in Recursive Semi-Markovian Models",
+      authors: "Ilya Shpitser, Judea Pearl (2006)",
+      venue: "Twenty-First National Conference on Artificial Intelligence (AAAI), 1219-1226",
+      link: "https://dl.acm.org/doi/10.5555/1597348.1597537",
+      desc: "Proves that the three rules of do-calculus are complete for causal effect identification in graphical models with latent variables."
+    }
+  ],
+  res: [
+    ["Paper", "Simpson's Paradox in Causality (Pearl)", "https://ftp.cs.ucla.edu/pub/stat_ser/r414.pdf", "Clear exposition of the backdoor criterion resolving historic paradoxes"],
+    ["Tool", "CausalFusion", "https://causalfusion.net/", "Automated graphical causal discovery and identification tool"],
+    ["Docs", "R package dagitty manual", "https://cran.r-project.org/web/packages/dagitty/vignettes/dagitty2.pdf", "Practical algorithmic identification tutorial"]
+  ],
+  quiz: [
+    ["Which variables must NOT be included in a valid backdoor adjustment set?", ["Confounders of treatment and outcome", "Descendants of the treatment variable", "Parent nodes of the treatment variable"], 1, "A backdoor adjustment set must never contain descendants of treatment X; adjusting for descendants blocks causal paths or induces collider bias."],
+    ["When is the Frontdoor Criterion particularly valuable?", ["When all confounders are perfectly measured", "When there is an unobserved confounder between treatment and outcome, but a clean mediator captures the full causal mechanism", "When there is no treatment effect"], 1, "Frontdoor identification allows causal estimation despite unmeasured confounding between X and Y, provided an unconfounded mediator M exists."],
+    ["What did Tian, Shpitser, and Pearl prove about Pearl's three rules of do-calculus?", ["They are only valid in linear Gaussian systems", "They are sound and complete for non-parametric identification in DAGs with unmeasured variables", "They contradict the potential outcomes framework"], 1, "The do-calculus has been proven complete: if an effect can be identified from the causal graph and observational distribution, do-calculus is guaranteed to derive it."]
+  ]
+},
+{
+  t: "Propensity Scores, Matching & Weighting",
+  time: "1 to 2 weeks",
+  goal: "Estimate treatment effects in observational data using propensity score matching, inverse probability weighting (IPW), and doubly robust estimation.",
+  math: "<b>Propensity Score:</b> e(Z) = P(X = 1 | Z)<br>" +
+        "Balancing Property: X &perp; Z | e(Z)<br><br>" +
+        "<b>Inverse Probability Weighting (IPW / Horvitz-Thompson):</b><br>" +
+        "&tau;<sub>IPW</sub> = E[ (X &middot; Y) / e(Z) ] - E[ ((1 - X) &middot; Y) / (1 - e(Z)) ]<br><br>" +
+        "<b>AIPW (Doubly Robust Estimator):</b><br>" +
+        "&mu;̂<sub>1</sub> = &frac1n; &sum; [ &mu;̂(1, Z<sub>i</sub>) + X<sub>i</sub>(Y<sub>i</sub> - &mu;̂(1, Z<sub>i</sub>)) / ê(Z<sub>i</sub>) ]<br>" +
+        "Consistent if <i>either</i> the outcome model &mu;(X, Z) OR the propensity score e(Z) is correctly specified.",
+  learn: [
+    "Rosenbaum and Rubin (1983) proved that conditioning on the one-dimensional propensity score e(Z) balances all measured covariates Z between treated and untreated groups.",
+    "Propensity score matching matches treated units to control units with similar e(Z); common caliper matching discards units without close matches.",
+    "Inverse Probability Weighting (IPW) creates a pseudo-population where treatment assignment is independent of measured confounders.",
+    "Extreme propensity scores (near 0 or 1) cause massive variance in IPW; trimming or stabilized weights are required.",
+    "Augmented IPW (AIPW) possesses double robustness: the estimator remains asymptotically unbiased if either the propensity model or the outcome regression model is misspecified."
+  ],
+  app: "Real-world evidence (RWE) in pharmacoepidemiology, comparing drug effectiveness across non-randomized health insurance claim records.",
+  py: "# Inverse Probability Weighting (IPW) & AIPW in Python\nimport numpy as np\nfrom sklearn.linear_model import LogisticRegression, LinearRegression\n\nnp.random.seed(42)\nn = 2000\nz = np.random.normal(0, 1, (n, 3))\ne_true = 1 / (1 + np.exp(- (0.5 * z[:,0] - 0.8 * z[:,1])))\nx = np.random.binomial(1, e_true)\ny = 2.0 * x + z[:,0] + 1.2 * z[:,1] + np.random.normal(0, 1, n)\n\n# 1. Fit propensity model\nps_model = LogisticRegression().fit(z, x)\ne_hat = np.clip(ps_model.predict_proba(z)[:, 1], 0.05, 0.95)\n\n# 2. IPW Estimator\nipw_ate = np.mean(x * y / e_hat) - np.mean((1 - x) * y / (1 - e_hat))\n\n# 3. Doubly Robust (AIPW)\nm1 = LinearRegression().fit(z[x==1], y[x==1]).predict(z)\nm0 = LinearRegression().fit(z[x==0], y[x==0]).predict(z)\ndr_ate = np.mean(m1 - m0 + (x * (y - m1) / e_hat) - ((1 - x) * (y - m0) / (1 - e_hat)))\nprint(f'IPW ATE: {ipw_ate:.3f} | AIPW ATE: {dr_ate:.3f} (True: 2.000)')",
+  r: "# Doubly robust estimation in R with WeightIt and cobalt\nlibrary(WeightIt)\nlibrary(cobalt)\n# Generate weights\n# W <- weightit(treat ~ age + bmi + smoke, data = df, method = 'glm')\n# bal.tab(W) # check covariate balance\n# summary(lm(outcome ~ treat, data = df, weights = W$weights))",
+  papers: [
+    {
+      title: "The Central Role of the Propensity Score in Observational Studies for Causal Effects",
+      authors: "Paul R. Rosenbaum, Donald B. Rubin (1983)",
+      venue: "Biometrika, 70(1), 41-55",
+      link: "https://doi.org/10.1093/biomet/70.1.41",
+      desc: "The breakthrough paper proving that conditioning on the propensity score balances all baseline covariates, reducing multidimensional adjustment to a single scalar."
+    },
+    {
+      title: "Semiparametric Efficiency Bounds for Missing Data Models",
+      authors: "James M. Robins, Andrea Rotnitzky, Lue Ping Zhao (1994)",
+      venue: "Journal of the American Statistical Association, 89(427), 846-866",
+      link: "https://doi.org/10.1080/01621459.1994.10476818",
+      desc: "Introduced augmented inverse probability weighting (AIPW) and the formal concept of double robustness in semiparametric inference."
+    }
+  ],
+  res: [
+    ["Docs", "causalweight R package", "https://cran.r-project.org/web/packages/causalweight/", "Algorithms for inverse probability weighting and doubly robust estimation"],
+    ["Tutorial", "Propensity Score Methods: A Practical Guide", "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3144483/", "Austin (2011) tutorial on matching algorithms and caliper selection"],
+    ["Tool", "EconML by Microsoft Research", "https://econml.azurewebsites.net/", "Advanced doubly robust and causal forest implementations in Python"]
+  ],
+  quiz: [
+    ["What property did Rosenbaum and Rubin prove regarding the propensity score?", ["It guarantees positivity", "It is a balancing score: conditional on e(Z), covariates Z are independent of treatment assignment X", "It replaces the need for the unconfoundedness assumption"], 1, "The propensity score balances covariates between treatment groups: X &perp; Z | e(Z)."],
+    ["What makes the Augmented Inverse Probability Weighting (AIPW) estimator 'doubly robust'?", ["It doubles the sample size", "It yields an asymptotically unbiased estimate of the ATE if EITHER the propensity score model OR the outcome regression model is correctly specified", "It works under both linear and non-linear DAGs"], 1, "Double robustness ensures consistency provided at least one of the two auxiliary models (treatment or outcome) is correctly parameterized."],
+    ["Why are propensity scores close to 0 or 1 dangerous in IPW?", ["They divide by zero or near-zero, exploding the estimator's variance", "They invert the direction of the causal effect", "They prevent logistic regression convergence"], 0, "When e(Z) is very close to 0 or 1, the weights 1/e(Z) or 1/(1-e(Z)) become huge, causing a few individual observations to dominate the entire estimate."]
+  ]
+},
+{
+  t: "Quasi-Experiments: IV, DiD & Regression Discontinuity",
+  time: "2 weeks",
+  goal: "Exploit natural experiments using Instrumental Variables (2SLS, LATE), Difference-in-Differences (parallel trends), and Regression Discontinuity Designs (sharp & fuzzy RDD).",
+  math: "<b>Instrumental Variable (IV) Core Conditions for Z:</b><br>" +
+        "1. Relevance: Cov(Z, X) &ne; 0<br>" +
+        "2. Exclusion Restriction: Z &rarr; Y only through X (no direct arrow Z &rarr; Y)<br>" +
+        "3. Exogeneity / Unconfoundedness: Z &perp; U (Z shares no common causes with Y)<br><br>" +
+        "<b>Two-Stage Least Squares (2SLS) &amp; Wald Estimator:</b><br>" +
+        "&tau;<sub>Wald</sub> = (E[Y | Z = 1] - E[Y | Z = 0]) / (E[X | Z = 1] - E[X | Z = 0])<br>" +
+        "Local Average Treatment Effect (LATE): Estimator identifies effect exclusively for <i>compliers</i> under monotonicity.<br><br>" +
+        "<b>Difference-in-Differences (DiD):</b><br>" +
+        "&tau;<sub>DiD</sub> = (E[Y<sub>post</sub> - Y<sub>pre</sub> | Treated]) - (E[Y<sub>post</sub> - Y<sub>pre</sub> | Control]) (Requires Parallel Trends).",
+  learn: [
+    "When unmeasured confounding makes backdoor adjustment impossible, econometric quasi-experiments exploit external shocks and policy cutoffs.",
+    "Angrist and Imbens formalized that under monotonicity (no defiers), IVs estimate the Local Average Treatment Effect (LATE)—the effect solely on individuals whose treatment status was altered by the instrument.",
+    "Difference-in-Differences (DiD) compares changes over time between treated and untreated groups. The critical identifying assumption is parallel trends: in the absence of treatment, the average outcomes of both groups would have followed parallel trajectories.",
+    "Recent econometric breakthroughs (Callaway & Sant'Anna 2021, Goodman-Bacon 2021) demonstrated that two-way fixed effects (TWFE) with staggered treatment rollouts yield biased estimates due to 'forbidden comparisons' (already-treated units serving as controls).",
+    "Regression Discontinuity Design (RDD) assigns treatment based on a continuous running variable crossing a sharp cutoff. Near the threshold, units just above and below are virtually identical, mimicking local randomization."
+  ],
+  app: "Measuring the causal return to schooling using quarter of birth (Angrist & Krueger), minimum wage impacts on employment (Card & Krueger), and scholarship cutoffs.",
+  py: "# Two-Stage Least Squares (2SLS) using linearmodels in Python\nimport numpy as np, pandas as pd\nfrom statsmodels.sandbox.regression.gmm import IV2SLS\n\nnp.random.seed(42)\nn = 2000\nu = np.random.normal(0, 1, n)       # Unobserved confounder (ability)\nz = np.random.binomial(1, 0.4, n)    # Instrument (lottery draft / policy)\nx = 0.6 * z + 0.8 * u + np.random.normal(0, 0.5, n) # Endogenous exposure (education)\ny = 2.5 * x + 1.2 * u + np.random.normal(0, 1, n)   # Outcome (wage, true beta = 2.5)\n\n# Stage 1: Regress X on Z\nx_hat = np.polyval(np.polyfit(z, x, 1), z)\n# Stage 2: Regress Y on X_hat\niv_effect = np.polyfit(x_hat, y, 1)[0]\nprint(f'2SLS IV Estimate: {iv_effect:.3f} (True: 2.500)')",
+  r: "# Difference-in-Differences in R\nlibrary(fixest)\n# Staggered DiD avoiding two-way fixed effect pitfalls\n# feols(outcome ~ treat_post | unit_id + time_id, data = df, cluster = ~unit_id)",
+  papers: [
+    {
+      title: "Identification and Estimation of Local Average Treatment Effects",
+      authors: "Guido W. Imbens, Joshua D. Angrist (1994)",
+      venue: "Econometrica, 62(2), 467-475",
+      link: "https://doi.org/10.2307/2951620",
+      desc: "The Nobel Prize-winning paper defining LATE and proving that IV methods estimate effects on compliers under monotonicity."
+    },
+    {
+      title: "Minimum Wages and Employment: A Case Study of the Fast-Food Industry in New Jersey and Pennsylvania",
+      authors: "David Card, Alan B. Krueger (1994)",
+      venue: "American Economic Review, 84(4), 772-793",
+      link: "https://www.jstor.org/stable/2117767",
+      desc: "Seminal empirical paper establishing modern Difference-in-Differences to evaluate state-level minimum wage increases."
+    },
+    {
+      title: "Difference-in-Differences with Multiple Time Periods",
+      authors: "Brantly Callaway, Pedro H. C. Sant'Anna (2021)",
+      venue: "Journal of Econometrics, 225(2), 200-230",
+      link: "https://doi.org/10.1016/j.jeconom.2020.12.001",
+      desc: "Solves the problem of staggered rollout in dynamic difference-in-differences, replacing flawed two-way fixed effect models."
+    }
+  ],
+  res: [
+    ["Book", "Mostly Harmless Econometrics: An Empiricist's Companion", "https://www.mostlyharmlesseconometrics.com/", "Angrist & Pischke's classic guide to IV, DiD, and RDD"],
+    ["Book", "Causal Inference: The Mixtape", "https://mixtape.scunning.com/", "Scott Cunningham's open-access, code-rich guide for practitioners"],
+    ["Course", "Nick Huntington-Klein: Causal Design Course", "https://github.com/NickCH-K/CausalDesign", "Slides, code exercises, and video lectures on quasi-experiments"]
+  ],
+  quiz: [
+    ["What does the Exclusion Restriction for an Instrumental Variable require?", ["The instrument Z must be highly correlated with treatment X", "The instrument Z affects outcome Y only through its effect on treatment X", "The instrument must be continuous"], 1, "The exclusion restriction specifies that Z cannot have any direct causal path to Y; all its influence must be mediated by X."],
+    ["Under the Imbens-Angrist framework, what subgroup does 2SLS estimate the effect for?", ["Always-takers", "Never-takers", "Compliers (units whose treatment choice is determined by the instrument)"], 2, "LATE applies specifically to compliers. It does not measure effects on always-takers or never-takers."],
+    ["What fundamental assumption is violated when staggered Two-Way Fixed Effects (TWFE) DiD uses already-treated units as controls?", ["Positivity", "Treatment effect homogeneity across time, leading to negative weighting of earlier treated cohorts", "Monotonicity"], 1, "Staggered timing causes previously-treated units to act as controls for newly-treated units, subtracting dynamic treatment effects and introducing severe bias."]
+  ]
+},
+{
+  t: "Causal Machine Learning & Heterogeneous Effects",
+  time: "2 weeks",
+  goal: "Estimate heterogeneous treatment effects (CATE), implement Double/Debiased Machine Learning (DML), and build Causal Forests.",
+  math: "<b>Conditional Average Treatment Effect (CATE):</b><br>" +
+        "&tau;(z) = E[Y(1) - Y(0) | Z = z]<br><br>" +
+        "<b>Robinson's Transformation &amp; Neyman Orthogonality:</b><br>" +
+        "Y - E[Y | Z] = &tau;(Z) &middot; (X - E[X | Z]) + &epsilon;<br>" +
+        "Orthogonality ensures that errors in nuisance function estimation (E[Y|Z] and E[X|Z]) have zero first-order impact on the target parameter &tau;.",
+  learn: [
+    "Classical machine learning optimizes purely for prediction (minimizing loss on P(Y|X, Z)); causal ML uses ML algorithms as 'nuisance estimators' while preserving valid asymptotic confidence intervals for causal parameters.",
+    "Chernozhukov et al. (2018) established Double/Debiased Machine Learning (DML): using Neyman-orthogonal score functions and cross-fitting (sample splitting) allows one to plug in arbitrary black-box estimators (Random Forests, Gradient Boosting, Deep Nets) without regularization bias corrupting the causal parameter.",
+    "Meta-learners for CATE: S-Learner (single model with treatment indicator), T-Learner (two separate models for treated and control), and X-Learner (Künzel et al., which accounts for extreme class imbalance).",
+    "Causal Forests (Athey & Wager) adapt tree splitting criteria to maximize heterogeneity in treatment effects across leaves rather than minimizing variance of predictions, yielding asymptotic normality."
+  ],
+  app: "Personalized medicine (identifying which patient genotypes experience positive vs adverse drug responses) and precision pricing/targeting.",
+  py: "# Double Machine Learning (DML) using EconML or DoubleML in Python\nimport numpy as np\nfrom sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier\n\nnp.random.seed(42)\nn = 1500\nz = np.random.uniform(-1, 1, (n, 5))\n# Treatment depends nonlinearly on Z\nx = np.random.binomial(1, 1 / (1 + np.exp(- (z[:, 0] + z[:, 1]))))\n# True CATE is heterogeneous: 2.0 + 3.0 * z[:, 0]\ny = (2.0 + 3.0 * z[:, 0]) * x + z[:, 1]**2 + np.random.normal(0, 0.5, n)\n\n# Cross-fitting residuals\nfrom sklearn.model_selection import KFold\nkf = KFold(n_splits=2)\ny_res = np.zeros(n); x_res = np.zeros(n)\nfor train, test in kf.split(z):\n    m_y = GradientBoostingRegressor().fit(z[train], y[train])\n    m_x = GradientBoostingClassifier().fit(z[train], x[train])\n    y_res[test] = y[test] - m_y.predict(z[test])\n    x_res[test] = x[test] - m_x.predict_proba(z[test])[:, 1]\n\n# Orthogonal residual regression\nate_dml = np.sum(x_res * y_res) / np.sum(x_res**2)\nprint(f'Estimated Average Effect via DML: {ate_dml:.3f} (True average: ~2.000)')",
+  r: "# Causal Forests in R with grf\nlibrary(grf)\n# X <- matrix(rnorm(n * p), n, p)\n# W <- rbinom(n, 1, 0.5)\n# Y <- pmax(X[, 1], 0) * W + X[, 2] + rnorm(n)\n# cf <- causal_forest(X, Y, W)\n# tau.hat <- predict(cf)$predictions",
+  papers: [
+    {
+      title: "Double/Debiased Machine Learning for Treatment and Structural Parameters",
+      authors: "Victor Chernozhukov, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, Whitney Newey, James Robins (2018)",
+      venue: "The Econometrics Journal, 21(1), C1-C68",
+      link: "https://doi.org/10.1111/ectj.12097",
+      desc: "Foundational paper demonstrating how cross-fitting and Neyman orthogonality enable valid root-N inference when nuisance functions are estimated via complex machine learning."
+    },
+    {
+      title: "Estimation and Inference of Heterogeneous Treatment Effects using Random Forests",
+      authors: "Susan Athey, Stefan Wager (2018)",
+      venue: "Journal of the American Statistical Association, 113(523), 1228-1242",
+      link: "https://doi.org/10.1080/01621459.2017.1319839",
+      desc: "Introduced Generalized Random Forests and Causal Forests, showing how recursive partitioning can provide point-wise consistent and asymptotically Gaussian CATE estimates."
+    },
+    {
+      title: "Metalearners for Estimating Heterogeneous Treatment Effects using Machine Learning",
+      authors: "Sören R. Künzel, Jasjeet S. Sekhon, Peter J. Bickel, Bin Yu (2019)",
+      venue: "Proceedings of the National Academy of Sciences (PNAS), 116(10), 4156-4165",
+      link: "https://doi.org/10.1073/pnas.1804597116",
+      desc: "Formalized S-, T-, and X-learners, demonstrating that the X-learner outperforms other meta-learners in settings with disproportionately sized treatment arms."
+    }
+  ],
+  res: [
+    ["Tool", "grf: Generalized Random Forests (R package)", "https://grf-labs.github.io/grf/", "Production-grade Causal Forest implementation developed by the authors"],
+    ["Tool", "DoubleML (Python & R)", "https://docs.doubleml.org/", "Modular implementation of Chernozhukov et al.'s DML framework"],
+    ["Book", "Machine Learning for Causal Inference", "https://causalml-book.org/", "Emerging comprehensive textbook on modern causal predictive methods"]
+  ],
+  quiz: [
+    ["What are the two key components of Double/Debiased Machine Learning (DML)?", ["Backpropagation and gradient descent", "Neyman-orthogonal score functions and sample-splitting (cross-fitting)", "Principal component analysis and bootstrap aggregation"], 1, "DML relies on Neyman orthogonality to remove first-order bias from ML nuisance parameters, and cross-fitting to eliminate overfitting bias."],
+    ["Why is an X-Learner often preferred over a T-Learner when evaluating drug trials?", ["It runs twice as fast", "It handles severe imbalance between treatment and control group sizes by modeling imputed counterfactual effects in two stages", "It does not require unconfoundedness"], 1, "The X-Learner estimates counterfactuals and then models the treatment effect residuals in both groups, outperforming the T-Learner when one group is much smaller."],
+    ["How does a Causal Forest differ from a standard Random Forest?", ["It splits nodes to maximize difference in treatment effects (&tau;) rather than minimizing outcome variance or impurity", "It cannot predict outcomes", "It only accepts categorical variables"], 0, "A Causal Forest optimizes each recursive split to maximize the heterogeneity of the treatment effect across daughter nodes while maintaining honesty."]
+  ]
+},
+{
+  t: "Causal Discovery & Frontier Challenges",
+  time: "Ongoing",
+  goal: "Infer causal graphs from observational data using constraint and score-based discovery, and explore causal deep learning.",
+  math: "<b>Markov Equivalence Class &amp; CPDAGs:</b><br>" +
+        "Two DAGs are Markov equivalent if and only if they share the exact same skeletons (undirected edges) and the exact same v-structures (unshielded colliders X &rarr; C &larr; Y with no edge between X and Y).<br><br>" +
+        "<b>Structural Equation Asymmetry (ANM):</b><br>" +
+        "Y = f(X) + N, with N &perp; X. For non-linear f, there generally exists no backward model X = g(Y) + N' such that N' &perp; Y.",
+  learn: [
+    "Causal discovery attempts the inverse problem: learning the underlying DAG directly from observational data without prior structural knowledge.",
+    "Constraint-based algorithms (e.g., PC Algorithm by Spirtes, Glymour, Scheines) perform sequential conditional independence tests to prune undirected edges, orient v-structures, and output a Completed Partially Directed Acyclic Graph (CPDAG).",
+    "Score-based algorithms (e.g., GES - Greedy Equivalence Search) search over the space of Markov equivalence classes to optimize Bayesian Information Criterion (BIC) or generalized scores.",
+    "Bivariate orientation using Additive Noise Models (ANM): Peters and Schölkopf demonstrated that continuous non-linear structural assignments with additive noise are identifiable up to causal direction.",
+    "Frontier frontiers: Out-of-distribution (OOD) generalization, causal representation learning (disentangling invariant causal mechanisms from raw pixels or text), and time-varying confounding with G-methods (Robins)."
+  ],
+  app: "Reconstructing gene regulatory networks from single-cell RNA sequencing data, and building robust autonomous perception systems immune to domain shifts.",
+  py: "# Testing independence of residuals in Additive Noise Models (ANM) using SciPy\nimport numpy as np\nfrom scipy.stats import pearsonr\n\nnp.random.seed(42)\nn = 1000\n# Forward process: X -> Y\nx = np.random.uniform(-2, 2, n)\ny = x**3 + np.random.normal(0, 1, n)\n\n# 1. Forward model Y = f(X) + N\nres_forward = y - np.polyval(np.polyfit(x, y, 3), x)\ncorr_forward, p_forward = pearsonr(x, res_forward)\n\n# 2. Backward model X = g(Y) + N\nres_backward = x - np.polyval(np.polyfit(y, x, 3), y)\ncorr_backward, p_backward = pearsonr(y, res_backward)\n\nprint(f'Forward model |Corr(X, e)|: {abs(corr_forward):.4f} (Independent)')\nprint(f'Backward model |Corr(Y, e)|: {abs(corr_backward):.4f} (Dependent -> Rejects Y -> X)')",
+  r: "# Constraint-based discovery using pcalg in R\nlibrary(pcalg)\n# suffStat <- list(C = cor(df), n = nrow(df))\n# pc.fit <- pc(suffStat, indepTest = gaussCItest, alpha = 0.05, labels = colnames(df))\n# plot(pc.fit)",
+  papers: [
+    {
+      title: "Causation, Prediction, and Search",
+      authors: "Peter Spirtes, Clark Glymour, Richard Scheines (1993/2000)",
+      venue: "MIT Press",
+      link: "https://mitpress.mit.edu/9780262194402/causation-prediction-and-search/",
+      desc: "The groundbreaking text introducing constraint-based causal discovery, formulating the PC algorithm and its asymptotic soundness."
+    },
+    {
+      title: "Causal Inference Using Graphical Models with the R Package pcalg",
+      authors: "Markus Kalisch, Martin Mächler, Diego Colombo, Marloes H. Maathuis, Peter Bühlmann (2012)",
+      venue: "Journal of Statistical Software, 47(11), 1-26",
+      link: "https://doi.org/10.18637/jss.v047.i11",
+      desc: "Definitive introduction to implementing discovery algorithms (PC, GES, IDA) for high-dimensional biological and observational data."
+    },
+    {
+      title: "Elements of Causal Inference: Foundations and Learning Algorithms",
+      authors: "Jonas Peters, Dominik Janzing, Bernhard Schölkopf (2017)",
+      venue: "MIT Press",
+      link: "https://mitpress.mit.edu/9780262037310/elements-of-causal-inference/",
+      desc: "Comprehensive book uniting structural causal models, bivariate causal discovery, additive noise models, and machine learning principles (open access)."
+    },
+    {
+      title: "Toward Causal Representation Learning",
+      authors: "Bernhard Schölkopf, Francesco Locatello, Stefan Bauer, Nan Rosemary Ke, Nal Kalchbrenner, Anirudh Goyal, Yoshua Bengio (2021)",
+      venue: "Proceedings of the IEEE, 109(5), 612-634",
+      link: "https://doi.org/10.1109/JPROC.2021.3058954",
+      desc: "Positions causality at the center of modern artificial intelligence, bridging causal mechanisms with self-supervised representation learning."
+    }
+  ],
+  res: [
+    ["Tool", "Causal-learn (Python package)", "https://github.com/py-why/causal-learn", "Python translation of the Tetrad project causal discovery algorithms"],
+    ["Book", "Elements of Causal Inference (Free PDF)", "https://library.oapen.org/handle/20.500.12657/26040", "Full open-access text by Peters, Janzing, and Schölkopf"],
+    ["Video", "Bernhard Schölkopf: Causality for Machine Learning", "https://www.youtube.com/watch?v=kYky-Xioh_0", "Keynote on deep learning invariance and physical causal models"]
+  ],
+  quiz: [
+    ["Why can standard constraint-based discovery algorithms (like PC) generally only identify a CPDAG rather than a unique DAG?", ["Because observational data alone cannot distinguish between DAGs in the same Markov Equivalence Class (same skeleton and v-structures)", "Because computers lack sufficient memory", "Because statistical power is always zero"], 0, "DAGs with the same skeleton and v-structures encode identical conditional independence statements and cannot be differentiated without interventions or structural assumptions."],
+    ["How does an Additive Noise Model (ANM) determine whether X causes Y or Y causes X?", ["By checking which variable was measured first in calendar time", "By fitting non-linear regressions in both directions and testing whether the residuals are statistically independent of the predictor", "By maximizing the Pearson correlation"], 1, "Under non-linear assignments Y = f(X) + N, the independence of noise N &perp; X holds in the true causal direction but is violated in the reverse direction."],
+    ["What fundamental vulnerability of deep learning does causal representation learning seek to resolve?", ["Slow training on GPUs", "Reliance on spurious correlations that break down under domain shifts and out-of-distribution data", "Inability to process images"], 1, "Deep neural nets easily overfit to spurious observational shortcuts. Causal representations recover invariant structural mechanisms that remain stable under distribution shifts."]
+  ]
+}
+];
+
+var KEY = "causality-course-state", done = {}, cur = 0, filt = "All";
+try { done = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e){}
+
+function g(id){ return document.getElementById(id); }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(done)); }catch(e){} }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function prog(){
+  var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+  g("pb").style.width = (100 * n / M.length) + "%";
+  g("pt").textContent = n + " of " + M.length + " modules completed";
+}
+
+function nav(){
+  var h = "";
+  M.forEach(function(m, i){
+    h += '<button data-i="' + i + '"' + (i === cur ? ' aria-current="true"' : "") + (done[i] ? ' class="done"' : "") + '>' + (i + 1) + '. ' + esc(m.t) + '</button>';
+  });
+  g("nav").innerHTML = h;
+  g("nav").querySelectorAll("button").forEach(function(b){
+    b.onclick = function(){
+      cur = +b.dataset.i;
+      filt = "All";
+      nav();
+      render();
+      window.scrollTo(0,0);
+    };
+  });
+}
+
+function render(){
+  var m = M[cur];
+  var h = "";
+  
+  // Header & Objectives
+  h += '<div class="card">';
+  h += '<h2>' + (cur + 1) + '. ' + esc(m.t) + '</h2>';
+  h += '<div class="meta">Suggested Duration: ' + esc(m.time) + '</div>';
+  h += '<p class="goal">' + esc(m.goal) + '</p>';
+  h += '<h3>Core Mathematical Foundations</h3>';
+  h += '<div class="formula-box">' + m.math + '</div>';
+  h += '<h3>Core Principles to Master</h3>';
+  h += '<ul>' + m.learn.map(function(x){ return '<li>' + x + '</li>'; }).join("") + '</ul>';
+  h += '</div>';
+
+  // Practical Applications
+  h += '<div class="card">';
+  h += '<h3>Where This Matters in Practice</h3>';
+  h += '<p style="margin:0 0 12px">' + esc(m.app) + '</p>';
+  h += '</div>';
+
+  // Code Implementations
+  h += '<div class="card">';
+  h += '<h3>Computational Implementations</h3>';
+  h += '<div class="lang">Python</div>';
+  h += '<pre><code>' + esc(m.py) + '</code></pre>';
+  h += '<div class="lang">R</div>';
+  h += '<pre><code>' + esc(m.r) + '</code></pre>';
+  h += '</div>';
+
+  // Landmark Papers Section
+  h += '<div class="card">';
+  h += '<h3>Historic &amp; Landmark Papers in this Area</h3>';
+  h += m.papers.map(function(p){
+    return '<div class="paper-item">' +
+           '<div class="paper-title"><a href="' + p.link + '" target="_blank" rel="noopener noreferrer">' + esc(p.title) + ' &nearr;</a></div>' +
+           '<div class="paper-authors">' + esc(p.authors) + ' &bull; <em>' + esc(p.venue) + '</em></div>' +
+           '<p class="paper-desc">' + esc(p.desc) + '</p>' +
+           '</div>';
+  }).join("");
+  h += '</div>';
+
+  // Further Reading & External Tools
+  var ty = ["All"];
+  m.res.forEach(function(r){ if(ty.indexOf(r[0]) < 0) ty.push(r[0]); });
+  h += '<div class="card">';
+  h += '<h3>Curated References &amp; Video Lectures</h3>';
+  h += '<div class="filters">' + ty.map(function(t){
+    return '<button data-f="' + esc(t) + '" aria-pressed="' + (t === filt) + '">' + esc(t) + '</button>';
+  }).join("") + '</div>';
+  m.res.forEach(function(r){
+    if(filt === "All" || r[0] === filt){
+      h += '<div class="res"><span class="tag">' + esc(r[0]) + '</span><div><a href="' + r[2] + '" target="_blank" rel="noopener noreferrer">' + esc(r[1]) + '</a><br><span class="n">' + esc(r[3]) + '</span></div></div>';
+    }
+  });
+  h += '</div>';
+
+  // Self-Check Quiz
+  h += '<div class="card"><h3>Concept Mastery Check</h3>';
+  m.quiz.forEach(function(q, qi){
+    h += '<div class="q" data-q="' + qi + '"><p>' + (qi + 1) + '. ' + esc(q[0]) + '</p>' +
+         q[1].map(function(o, oi){
+           return '<button class="opt" data-o="' + oi + '">' + esc(o) + '</button>';
+         }).join("") +
+         '<div class="why"></div></div>';
+  });
+  h += '</div>';
+
+  // Navigation Buttons
+  h += '<div class="row">' +
+       '<button class="btn primary" id="dn">' + (done[cur] ? "Mark as Incomplete" : "Mark Module Complete") + '</button>' +
+       '<span>' +
+       (cur > 0 ? '<button class="btn" id="pv">&larr; Previous Module</button> ' : "") +
+       (cur < M.length - 1 ? '<button class="btn" id="nx">Next Module &rarr;</button>' : "") +
+       '</span></div>';
+
+  var mn = g("mod");
+  mn.innerHTML = h;
+
+  // Event bindings
+  mn.querySelectorAll("[data-f]").forEach(function(b){
+    b.onclick = function(){ filt = b.dataset.f; render(); };
+  });
+
+  mn.querySelectorAll(".q").forEach(function(qe){
+    var q = m.quiz[+qe.dataset.q];
+    qe.querySelectorAll(".opt").forEach(function(b){
+      b.onclick = function(){
+        var o = +b.dataset.o;
+        qe.querySelectorAll(".opt").forEach(function(x){ x.classList.remove("ok","bad"); });
+        b.classList.add(o === q[2] ? "ok" : "bad");
+        qe.querySelector(".why").innerHTML = (o === q[2] ? "<strong style='color:var(--ok)'>Correct:</strong> " : "<strong style='color:var(--bad)'>Incorrect:</strong> ") + q[3];
+      };
+    });
+  });
+
+  g("dn").onclick = function(){
+    done[cur] = !done[cur];
+    save();
+    nav();
+    prog();
+    render();
+  };
+  if(g("pv")) g("pv").onclick = function(){ cur--; filt="All"; nav(); render(); window.scrollTo(0,0); };
+  if(g("nx")) g("nx").onclick = function(){ cur++; filt="All"; nav(); render(); window.scrollTo(0,0); };
+}
+
+nav();
+render();
+prog();
+</script>
+</body>
+</html>
