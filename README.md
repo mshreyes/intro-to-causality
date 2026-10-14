@@ -1,6 +1,6 @@
 # Introduction to Causality & Causal Inference
 
-A comprehensive, self-paced curriculum covering modern causal inference, structural causal models (SCMs), potential outcomes (Rubin causal model), quasi-experimental identification, causal machine learning, and causal discovery.
+An extensive, self-paced curriculum covering modern causal inference, structural causal models (SCMs), potential outcomes (Rubin causal model), quasi-experimental identification, causal machine learning, and causal discovery.
 
 Delivered as a zero-dependency, single-file interactive application (`index.html`) featuring native HTML/Unicode mathematical formatting (no broken LaTeX rendering), executable Python and R snippets, landmark scientific papers, and conceptual mastery quizzes.
 
