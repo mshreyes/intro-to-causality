@@ -51,7 +51,7 @@ Suggestions for additional landmark literature, clarified mathematical explanati
   - *Elements of Causal Inference: Foundations and Learning Algorithms* by Jonas Peters, Dominik Janzing, and Bernhard Schölkopf (MIT Press).
   - *Mostly Harmless Econometrics* by Joshua D. Angrist and Jörn-Steffen Pischke.
   - Brady Neal's open lecture series *Introduction to Causal Inference*.
-- Instructional design, software development, and documentation assistance: Gemini (Google).
+- Coding assistance: Gemini (Google).
 
 ## License
 
