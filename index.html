@@ -87,7 +87,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 <body>
 <header>
 <h1>Introduction to Causality &amp; Causal Inference</h1>
-<p>A rigorous curriculum bridging structural causal models (DAGs, do-calculus), potential outcomes (Rubin causal model), quasi-experimental identification, and causal machine learning. Each module features clear mathematical formulations, Python and R implementations, foundational landmark papers, and conceptual checks.</p>
+<p>A rigorous curriculum bridging structural causal models (DAGs, do-calculus), potential outcomes (Rubin causal model), quasi-experimental identification, and causal machine learning. Each module features clear mathematical formulations, Python and R implementations, suggested readings, and conceptual checks.</p>
 <div class="bar" aria-hidden="true"><i id="pb"></i></div>
 <div class="meta" id="pt"></div>
 </header>
@@ -564,7 +564,7 @@ function render(){
 
   // Landmark Papers Section
   h += '<div class="card">';
-  h += '<h3>Historic &amp; Landmark Papers in this Area</h3>';
+  h += '<h3>Suggested readings</h3>';
   h += m.papers.map(function(p){
     return '<div class="paper-item">' +
            '<div class="paper-title"><a href="' + p.link + '" target="_blank" rel="noopener noreferrer">' + esc(p.title) + ' &nearr;</a></div>' +
